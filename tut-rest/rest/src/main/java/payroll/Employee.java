@@ -12,6 +12,7 @@ class Employee {
 	private @Id @GeneratedValue Long id;
 	private String name;
 	private String role;
+	private int jobYears;
 
 	Employee() {}
 
@@ -19,6 +20,12 @@ class Employee {
 
 		this.name = name;
 		this.role = role;
+	}
+	Employee(String name, String role,int jobYears ) {
+
+		this.name = name;
+		this.role = role;
+		this.jobYears = jobYears;
 	}
 
 	public Long getId() {
@@ -32,6 +39,9 @@ class Employee {
 	public String getRole() {
 		return this.role;
 	}
+	public int getJobYears() {
+		return this.jobYears;
+	}
 
 	public void setId(Long id) {
 		this.id = id;
@@ -44,6 +54,9 @@ class Employee {
 	public void setRole(String role) {
 		this.role = role;
 	}
+	public void setJobYears(int jobYears) {
+		this.jobYears = jobYears;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -54,7 +67,7 @@ class Employee {
 			return false;
 		Employee employee = (Employee) o;
 		return Objects.equals(this.id, employee.id) && Objects.equals(this.name, employee.name)
-				&& Objects.equals(this.role, employee.role);
+				&& Objects.equals(this.role, employee.role)&& Objects.equals(this.jobYears, employee.jobYears);
 	}
 
 	@Override
