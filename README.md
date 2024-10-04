@@ -1,5 +1,5 @@
 # COGSI 24/25
-Each student should add content only to their specific subfolder within the chosen class assignment folder for the presentation
+Each group should add content only to their specific subfolder within the chosen class assignment folder for the presentation
 
 ### Instructions for creating a Pull Request
 
