@@ -33,7 +33,7 @@ class Employee {
 		this.name = name;
 		this.role = role;
 		this.jobYears = jobYears;
-		this.email = email;
+		setEmail(email);
 	}
 
 	public Long getId() {
@@ -65,7 +65,9 @@ class Employee {
 	public void setJobYears(int jobYears) {
 		this.jobYears = jobYears;
 	}
-	public void setEmail(String email) { this.email = email; }
+	public void setEmail(String email) {
+		if(email.contains("@")) this.email = email;
+	}
 
 	@Override
 	public boolean equals(Object o) {
