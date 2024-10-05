@@ -13,8 +13,9 @@ class Employee {
 	private String name;
 	private String role;
 	private int jobYears;
+	private String email;
 
-	Employee() {}
+	public Employee() {}
 
 	Employee(String name, String role) {
 
@@ -26,6 +27,13 @@ class Employee {
 		this.name = name;
 		this.role = role;
 		this.jobYears = jobYears;
+	}
+
+	public Employee(String name, String role, int jobYears, String email) {
+		this.name = name;
+		this.role = role;
+		this.jobYears = jobYears;
+		this.email = email;
 	}
 
 	public Long getId() {
@@ -42,7 +50,7 @@ class Employee {
 	public int getJobYears() {
 		return this.jobYears;
 	}
-
+	public String getEmail() { return email; }
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -57,6 +65,7 @@ class Employee {
 	public void setJobYears(int jobYears) {
 		this.jobYears = jobYears;
 	}
+	public void setEmail(String email) { this.email = email; }
 
 	@Override
 	public boolean equals(Object o) {
@@ -67,8 +76,9 @@ class Employee {
 			return false;
 		Employee employee = (Employee) o;
 		return Objects.equals(this.id, employee.id) && Objects.equals(this.name, employee.name)
-				&& Objects.equals(this.role, employee.role)&& Objects.equals(this.jobYears, employee.jobYears);
+				&& Objects.equals(this.role, employee.role)&& Objects.equals(this.jobYears, employee.jobYears) && Objects.equals(this.email,employee.email);
 	}
+
 
 	@Override
 	public int hashCode() {
