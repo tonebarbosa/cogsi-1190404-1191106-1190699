@@ -25,8 +25,15 @@ dependencies {
     // Use Apache Log4J for logging
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }
- 
+
+test {
+    useJUnitPlatform()
+}
+
 jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
 
@@ -39,6 +46,16 @@ jar {
     }
 }
 
+task runServer(type:JavaExec, dependsOn: classes){
+    group = "DevOps"
+    description = "Launches a chat server to which the clients will connect"
+
+    classpath = sourceSets.main.runtimeClasspath
+
+    mainClass = 'basic_demo.ChatServerApp'
+
+    args '59001'
+}
 
 
 task runClient(type:JavaExec, dependsOn: classes){
@@ -50,4 +67,15 @@ task runClient(type:JavaExec, dependsOn: classes){
     mainClass = 'basic_demo.ChatClientApp'
 
     args 'localhost', '59001'
+}
+
+task createBackup(type: Copy) {
+    from 'src'
+    into 'backup'
+}
+
+task createZipBackup(type: Zip, dependsOn: createBackup) {
+    from 'backup'
+    archiveFileName = 'backup.zip'
+    destinationDirectory = file('backup')
 }
