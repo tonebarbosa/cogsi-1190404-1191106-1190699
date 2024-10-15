@@ -30,6 +30,16 @@ java {
     }
 }
 
+task bootRun(type:JavaExec){
+    group = "DevOps"
+    description = "Launches the payroll aplicattion that connects to a server on localhost:59001 "
+
+    classpath = sourceSets.main.runtimeClasspath
+
+    mainClass = 'payroll.PayrollApplication'
+
+}
+
 application {
     // Define the main class for the application.
     mainClass = 'org.example.App'
