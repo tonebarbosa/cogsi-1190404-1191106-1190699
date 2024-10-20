@@ -1,0 +1,94 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/main/test/integrationTest/java'
+        }
+        resources {
+            srcDir 'src/main/test/integrationTest/resources'
+        }
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = 'org.springframework.guides'
+version = '0.0.1-SNAPSHOT'
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+    runtimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    integrationTestImplementation 'org.assertj:assertj-core:3.24.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'payroll.PayrollApplication'
+}
+
+task createZipBackup(type: Zip) {
+    from 'src'
+    archiveFileName = 'backup.zip'
+    destinationDirectory = file('backup')
+}
+
+task runsAppPerOS(dependsOn: installDist) {
+    doLast {
+        def os = org.gradle.internal.os.OperatingSystem.current()
+        def installDir = "build/install/app"
+
+        if (os.isWindows()) {
+            exec {
+                commandLine "$installDir/bin/app.bat"
+            }
+        } else {
+            exec {
+                commandLine "$installDir/bin/app"
+            }
+        }
+    }
+}
+
+task generateJavadoc(type: Zip, dependsOn: javadoc) {
+    from javadoc.destinationDir
+    archiveFileName = 'javadoc.zip'
+    destinationDirectory = file("build/javadoc")
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter test
+}
+check.dependsOn integrationTest
