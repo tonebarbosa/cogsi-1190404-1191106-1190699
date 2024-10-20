@@ -1,11 +1,11 @@
-package payroll;
+package integrationTest.java;
 
 import org.junit.jupiter.api.Test;
+import payroll.Employee;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class EmployeeTest {
-
+public class EmployeeIntegrationTest {
     @Test
     public void testEmployee() {
         Employee emp = new Employee("name", "role" );
@@ -28,4 +28,5 @@ public class EmployeeTest {
         String email = "1240000@isep.ipp.pt";
         assertEquals(emp2.getEmail(),email);
     }
+
 }

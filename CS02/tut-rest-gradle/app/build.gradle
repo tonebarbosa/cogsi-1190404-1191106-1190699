@@ -5,6 +5,19 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.6'
 }
 
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/main/test/integrationTest/java'
+        }
+        resources {
+            srcDir 'src/main/test/integrationTest/resources'
+        }
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -12,12 +25,20 @@ repositories {
 group = 'org.springframework.guides'
 version = '0.0.1-SNAPSHOT'
 
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-hateoas'
     runtimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    integrationTestImplementation 'org.assertj:assertj-core:3.24.2'
 }
 
 test {
@@ -62,3 +83,12 @@ task generateJavadoc(type: Zip, dependsOn: javadoc) {
     archiveFileName = 'javadoc.zip'
     destinationDirectory = file("build/javadoc")
 }
+
+task integrationTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter test
+}
+check.dependsOn integrationTest

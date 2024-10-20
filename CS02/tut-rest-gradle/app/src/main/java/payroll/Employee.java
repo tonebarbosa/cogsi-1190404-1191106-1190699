@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
 @Entity
-class Employee {
+public class Employee {
 
 	private @Id @GeneratedValue Long id;
 	private String name;
@@ -17,12 +17,12 @@ class Employee {
 
 	public Employee() {}
 
-	Employee(String name, String role) {
+	public Employee(String name, String role) {
 
 		this.name = name;
 		this.role = role;
 	}
-	Employee(String name, String role,int jobYears ) {
+	public Employee(String name, String role, int jobYears) {
 
 		this.name = name;
 		this.role = role;
