@@ -407,6 +407,7 @@ Then selected "Java" (1)
 ![img_1.png](pictures/gradleinit3.png)
 
 For the application structure we went with Single Application Project (1) since we don't want to create a library
+
 We used Groovy (2) as the build script DSL following the same structure as the first part
 
 For the test framework we used JUnit 4 (1) following the same approach as the first part
@@ -572,7 +573,7 @@ In the ivy.xml file we defined the dependencies we needed
 
 After that we ran the "ant" command, to install all the dependencies needed
 
-In the same build.xml we added the compile and jar targets, to compile and create the jard for the application
+In the same build.xml we added the compile and jar targets, to compile and create the jar for the application
 
 ![img_6.png](pictures/img_6.png)
 
