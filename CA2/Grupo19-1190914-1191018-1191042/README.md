@@ -665,8 +665,6 @@ Before the test validation, we cleaned the database and added two orders in the 
 ![img_10.png](pictures/img_10.png)
 
 
-### Step 2- Adding Unit Tests and Configuring Ant for JUnit
-
 Next, we set up unit testing using JUnit in Ant. For this, we created a target named test
 which compiles the test classes and runs them using the junit task:
 
