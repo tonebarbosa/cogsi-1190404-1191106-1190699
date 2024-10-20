@@ -1,0 +1,113 @@
+<project name="tut-rest-ant" default="run"  xmlns:ivy="antlib:org.apache.ivy.ant" basedir=".">
+
+    <property name="src.dir" value="src/main/java/payroll"/>
+    <property name="resources.dir" value="src/main/resources"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="backup.dir" value="backup"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="mainClass" value="${build.dir}/classes/payroll/PayrollApplication.class"/>
+    <property name="javadoc.dir" value="${build.dir}/javadoc"/>
+    <property name="javadoc.zip.dir" value="${build.dir}/javadoc-zip"/>
+    <property name="integration.test.dir" value="${build.dir}/test/integrationTest"/>
+
+    <target name="install-ivy" unless="ivy.installed">
+        <mkdir dir="${user.home}/.ant/lib"/>
+        <get dest="${user.home}/.ant/lib/ivy.jar" src="http://search.maven.org/remotecontent?filepath=org/apache/ivy/ivy/2.4.0/ivy-2.4.0.jar"/>
+        <fail message="Ivy has been installed. Run the build again"/>
+    </target>
+
+    <available classname="org.apache.ivy.Main" property="ivy.installed"/>
+    <target name="resolve" depends="install-ivy">
+        <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision](-[classifier]).[ext]">
+            <dependency org="org.springframework.boot" name="spring-boot-starter-web" rev="3.2.5" conf="default"/>
+            <dependency org="org.springframework.boot" name="spring-boot-starter-data-jpa" rev="3.2.5" conf="default"/>
+            <dependency org="org.springframework.boot" name="spring-boot-starter-hateoas" rev="3.2.5" conf="default"/>
+        </ivy:retrieve>
+    </target>
+
+    <path id="project.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${backup.dir}"/>
+    </target>
+
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="project.classpath"/>
+    </target>
+
+    <target name="createZipBackup">
+        <copy todir="${backup.dir}">
+            <fileset dir="src"/>
+        </copy>
+        <zip destfile="${backup.dir}/backup.zip" basedir="${backup.dir}"/>
+    </target>
+
+    <target name="package" depends="compile">
+        <mkdir dir="${build.dir}/lib"/>
+        <jar destfile="${build.dir}/lib/${ant.project.name}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${mainClass}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="runApp" depends="package">
+        <condition property="is.windows">
+            <os family="windows"/>
+        </condition>
+        <condition property="is.unix">
+            <os family="unix"/>
+        </condition>
+
+        <exec executable="java" failonerror="true">
+            <arg path="build/lib/tut-rest-ant.jar"/>
+        </exec>
+    </target>
+
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="run" depends="compile, runApp"/>
+
+    <target name="prepare-javadoc">
+        <mkdir dir="${javadoc.dir}"/>
+        <mkdir dir="${javadoc.zip.dir}"/>
+    </target>
+
+    <target name="javadoc" depends="prepare-javadoc">
+        <javadoc destdir="${javadoc.dir}" sourcepath="src/main/java">
+            <classpath>
+                <fileset dir="${build.dir}/lib" includes="*.jar"/>
+            </classpath>
+            <source>17</source>
+        </javadoc>
+    </target>
+
+    <target name="generateJavadocZip" depends="javadoc">
+        <zip destfile="${javadoc.zip.dir}/javadoc.zip">
+            <fileset dir="${javadoc.dir}"/>
+        </zip>
+    </target>
+
+    <target name="integrationTest" >
+        <mkdir dir="${integration.test.dir}"/>
+        <java fork="true" failonerror="true">
+            <classpath>
+                <pathelement path="${build.dir}/classes"/>
+                <pathelement path="${build.dir}/lib/*"/>
+            </classpath>
+            <jvmarg value="-Dtest.dir=${integration.test.dir}"/>
+            <arg value="EmployeeIntegrationTest"/>
+        </java>
+    </target>
+</project>

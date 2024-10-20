@@ -147,3 +147,5 @@ gradle-app.setting
 .gradletasknamecache
 
 *.hprof
+
+lib
