@@ -1,5 +1,5 @@
 # CS 03
-This report outlines the tasks for setting up build automation and a virtual development environment using Vagrant and Gradle for Part 1 of the assignment. The primary focus is automating essential tasks such as VM provisioning, project setup, running the server, unit testing, and creating backups.
+This report details the setup and configuration of a Vagrant-managed virtual environment for deploying a Spring Boot application with an H2 database. The assignment is divided into two parts: Part 1 establishes a single VM with all necessary dependencies, automates application builds, and provides access from the host machine. Part 2 expands to a multi-VM setup, separating the application and database on two VMs with secure networking and automated dependency checks.
 
 ## Part 1
 ### Setting Up Vagrant VM
