@@ -10,7 +10,7 @@ if [ ! -d "/home/vagrant/cs03" ]; then
   git clone https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git /home/vagrant/cs03
 fi
 
-cd /home/vagrant/cs03
+cd /home/vagrant/cs03/CS01/tut-rest
 
 ./mvnw clean install -DskipTests
 ./gradlew build
