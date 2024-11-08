@@ -1,0 +1,41 @@
+- name: Provision REST service on app VM
+  hosts: host1
+  become: true
+  tasks:
+    - name: Update package index
+      apt:
+        update_cache: yes
+
+    - name: Install Git, OpenJDK 11, and Maven
+      apt:
+        name:
+          - git
+          - openjdk-11-jdk
+          - maven
+        state: present
+
+    - name: Clone repository
+      git:
+        repo: https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git
+        dest: /home/vagrant/cogsi
+        version: HEAD
+
+    - name: Build the Spring application
+      shell: ./mvnw clean install -DskipTests
+      args:
+        chdir: /home/vagrant/cogsi/CS01/tut-rest
+
+    - name: Start the Spring application
+      shell: nohup java -jar target/*.jar --spring.datasource.url=jdbc:h2:tcp://192.168.33.10:9092/~/test &
+      args:
+        chdir: /home/vagrant/cogsi/CS01/tut-rest
+      async: 10
+      poll: 0
+
+    - name: Wait for H2 database to be accessible
+      wait_for:
+        host: 192.168.33.10
+        port: 9092
+        state: started
+        delay: 5
+        timeout: 60

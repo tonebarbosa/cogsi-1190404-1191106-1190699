@@ -1,0 +1,33 @@
+- name: Provision H2 database on db VM
+  hosts: host2
+  become: true
+  tasks:
+    - name: Update package index
+      apt:
+        update_cache: yes
+
+    - name: Install H2 database
+      apt:
+        name: h2
+        state: present
+
+    - name: Start the H2 database server
+      shell: nohup java -cp /usr/share/h2/lib/h2.jar org.h2.tools.Server -tcp -tcpAllowOthers -tcpPort 9092 &
+      async: 10
+      poll: 0
+
+    - name: Install UFW firewall
+      apt:
+        name: ufw
+        state: present
+
+    - name: Allow incoming connections to H2 from app VM
+      ufw:
+        rule: allow
+        from_ip: 192.168.33.11
+        to_any_port: 9092
+        proto: tcp
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
