@@ -1,41 +1,118 @@
-- name: Provision REST service on app VM
-  hosts: host1
+- name: Provision Application VM
+  hosts: all
   become: true
+  vars:
+    java_home: "/usr/lib/jvm/java-17-openjdk-arm64"
+    gradle_version: "8.4"
+    gradle_url: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
+    gradle_dest: "/opt/gradle"
+    repo_url: "https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git"
+
   tasks:
-    - name: Update package index
+    - name: Update and upgrade apt packages
       apt:
         update_cache: yes
+        upgrade: dist
 
-    - name: Install Git, OpenJDK 11, and Maven
+    - name: Install required packages
       apt:
         name:
           - git
-          - openjdk-11-jdk
+          - openjdk-17-jdk
           - maven
+          - wget
+          - unzip
         state: present
 
-    - name: Clone repository
+    - name: Set JAVA_HOME environment variable
+      copy:
+        dest: /etc/profile.d/jdk.sh
+        content: |
+          export JAVA_HOME={{ java_home }}
+          export PATH=$JAVA_HOME/bin:$PATH
+        mode: '0644'
+
+    - name: Download Gradle
+      get_url:
+        url: "{{ gradle_url }}"
+        dest: /tmp/gradle.zip
+
+    - name: Ensure /opt/gradle directory exists
+      ansible.builtin.file:
+        path: "{{ gradle_dest }}"
+        state: directory
+        mode: '0755'
+
+    - name: Unzip Gradle
+      unarchive:
+        src: /tmp/gradle.zip
+        dest: "{{ gradle_dest }}"
+        remote_src: yes
+
+    - name: Create Gradle symlink
+      file:
+        src: "{{ gradle_dest }}/gradle-{{ gradle_version }}/bin/gradle"
+        dest: /usr/bin/gradle
+        state: link
+
+    - name: Source JAVA_HOME in the current shell
+      shell: source /etc/profile.d/jdk.sh
+      args:
+        executable: /bin/bash
+
+    - name: Display versions
+      shell: |
+        echo "Git version: $(git --version)"
+        echo "Java version: $(java -version)"
+        echo "Maven version: $(mvn -version)"
+        echo "Gradle version: $(gradle -v)"
+      register: version_output
+
+    - name: Print versions output
+      debug:
+        msg: "{{ version_output.stdout_lines }}"
+
+    - name: Clone repository if CLONE_REPO is true
       git:
-        repo: https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git
-        dest: /home/vagrant/cogsi
-        version: HEAD
+        repo: "{{ repo_url }}"
+        dest: cogsi-1190404-1191106-1190699
+      #when: "'CLONE' in ansible_env and ansible_env.CLONE_REPO == 'true'"
 
-    - name: Build the Spring application
-      shell: ./mvnw clean install -DskipTests
-      args:
-        chdir: /home/vagrant/cogsi/CS01/tut-rest
+    - name: Configure application.properties for Spring Boot
+      copy:
+        dest: cogsi-1190404-1191106-1190699/CS02/tut-rest-gradle/app/src/main/resources/application.properties
+        content: |
+          spring.datasource.url=jdbc:h2:tcp://localhost:1011/./test
+          spring.datasource.driverClassName=org.h2.Driver
+          spring.datasource.username=sa
+          spring.datasource.password=
 
-    - name: Start the Spring application
-      shell: nohup java -jar target/*.jar --spring.datasource.url=jdbc:h2:tcp://192.168.33.10:9092/~/test &
-      args:
-        chdir: /home/vagrant/cogsi/CS01/tut-rest
-      async: 10
-      poll: 0
-
-    - name: Wait for H2 database to be accessible
+    - name: Wait for database to be ready
       wait_for:
-        host: 192.168.33.10
-        port: 9092
+        host: "database.mydomain"
+        port: 9095
+        delay: 3
         state: started
-        delay: 5
-        timeout: 60
+        timeout: 300
+      delegate_to: localhost
+
+
+    - name: Build and start chat service if START_CHAT_SERVICE is true
+      shell: |
+        echo "Building chat service..."
+        gradle build
+        echo "Starting chat service..."
+        gradle runServer &
+      args:
+        chdir: cogsi-1190404-1191106-1190699/CS02/
+      when: "'START_CHAT_SERVICE' in ansible_env and ansible_env.START_CHAT_SERVICE == 'true'"
+
+    - name: Build and start REST service if START_REST_SERVICE is true
+      shell: |
+        echo "Building REST service..."
+        gradle build
+        echo "Starting REST service..."
+        gradle bootRun &
+      args:
+        chdir: cogsi-1190404-1191106-1190699/CS02/tut-rest-gradle/app
+      when: "'START_REST_SERVICE' in ansible_env and ansible_env.START_REST_SERVICE == 'true'"

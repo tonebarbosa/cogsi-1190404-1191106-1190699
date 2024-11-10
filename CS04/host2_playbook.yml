@@ -1,33 +1,93 @@
-- name: Provision H2 database on db VM
-  hosts: host2
+- name: Install H2 Database and Java
+  hosts: all
   become: true
+
   tasks:
-    - name: Update package index
+    - name: Update and upgrade apt packages
       apt:
         update_cache: yes
+        upgrade: dist
 
-    - name: Install H2 database
+    - name: Install required packages
       apt:
-        name: h2
+        name:
+          - wget
+          - unzip
+          - openjdk-17-jdk
         state: present
 
-    - name: Start the H2 database server
-      shell: nohup java -cp /usr/share/h2/lib/h2.jar org.h2.tools.Server -tcp -tcpAllowOthers -tcpPort 9092 &
-      async: 10
-      poll: 0
-
-    - name: Install UFW firewall
-      apt:
-        name: ufw
-        state: present
-
-    - name: Allow incoming connections to H2 from app VM
+    - name: Allow SSH on port 22
       ufw:
         rule: allow
-        from_ip: 192.168.33.11
-        to_any_port: 9092
+        port: '22'
         proto: tcp
 
-    - name: Enable UFW
+    - name: Allow traffic on port 9095 from the app VM's IP
+      ufw:
+        rule: allow
+        from_ip: "192.168.138.144"
+        port: '9095'
+
+    - name: Enable UFW firewall
       ufw:
         state: enabled
+
+    - name: Set JAVA_HOME system-wide
+      copy:
+        dest: /etc/profile.d/jdk.sh
+        content: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+          export PATH=$JAVA_HOME/bin:$PATH
+        mode: '0644'
+
+    - name: Download H2 Database
+      get_url:
+        url: https://github.com/h2database/h2database/releases/download/version-2.3.230/h2-2024-07-15.zip
+        dest: /tmp/h2.zip
+
+    - name: Unzip H2 Database
+      unarchive:
+        src: /tmp/h2.zip
+        dest: /home/vagrant
+        remote_src: yes
+
+    - name: Create H2 startup script
+      copy:
+        dest: /home/vagrant/start_h2.sh
+        content: |
+          #!/bin/bash
+          java -cp /home/vagrant/h2/bin/h2*.jar org.h2.tools.Server -tcp -tcpAllowOthers -baseDir /home/vagrant/h2data
+        mode: '0755'
+
+    - name: Configure H2 as a systemd service
+      copy:
+        dest: /etc/systemd/system/h2.service
+        content: |
+          [Unit]
+          Description=H2 Database Service
+          After=network.target
+
+          [Service]
+          ExecStart=/home/vagrant/start_h2.sh
+          User=vagrant
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+
+    - name: Reload systemd, enable, and start H2 service
+      systemd:
+        daemon_reload: yes
+        name: h2
+        enabled: yes
+        state: started
+
+    - name: Verify Java installation
+      shell: java -version
+      register: java_version_output
+      changed_when: false
+
+    - name: Display Java version
+      debug:
+        msg: "{{ java_version_output.stdout }}"
