@@ -1,0 +1,43 @@
+- name: Configure PAM for password complexity
+  hosts: all
+  become: true
+  tasks:
+    - name: Install PAM
+      apt:
+        name: libpam-pwquality
+        state: present
+
+    - name: Set minimum password length to 12
+      lineinfile:
+        path: /etc/security/pwquality.conf
+        regexp: '^#?minlen='
+        line: 'minlen=12'
+        state: present
+
+    - name: Require at least 1 uppercase letter
+      lineinfile:
+        path: /etc/security/pwquality.conf
+        regexp: '^#?ucredit='
+        line: 'ucredit=-1'
+        state: present
+
+    - name: Require at least 1 lowercase letter
+      lineinfile:
+        path: /etc/security/pwquality.conf
+        regexp: '^#?lcredit='
+        line: 'lcredit=-1'
+        state: present
+
+    - name: Require at least 1 digit
+      lineinfile:
+        path: /etc/security/pwquality.conf
+        regexp: '^#?dcredit='
+        line: 'dcredit=-1'
+        state: present
+
+    - name: Require at least 1 special character
+      lineinfile:
+        path: /etc/security/pwquality.conf
+        regexp: '^#?ocredit='
+        line: 'ocredit=-1'
+        state: present

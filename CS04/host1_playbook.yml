@@ -1,0 +1,95 @@
+- name: Provision Application VM
+  hosts: all
+  become: true
+  vars:
+    java_home: "/usr/lib/jvm/java-17-openjdk-arm64"
+    gradle_version: "8.4"
+    gradle_url: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
+    gradle_dest: "/opt/gradle"
+    repo_url: "https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git"
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - openjdk-17-jdk
+          - maven
+          - wget
+          - unzip
+        state: present
+
+    - name: Set JAVA_HOME environment variable
+      lineinfile:
+        path: /etc/profile.d/jdk.sh
+        line: |
+          export JAVA_HOME={{ java_home }}
+          export PATH=$JAVA_HOME/bin:$PATH
+        create: yes
+
+    - name: Download Gradle
+      get_url:
+        url: "{{ gradle_url }}"
+        dest: /tmp/gradle.zip
+
+    - name: Ensure /opt/gradle directory exists
+      file:
+        path: "{{ gradle_dest }}"
+        state: directory
+        mode: '0755'
+
+    - name: Unzip Gradle
+      unarchive:
+        src: /tmp/gradle.zip
+        dest: "{{ gradle_dest }}"
+        remote_src: yes
+
+    - name: Create Gradle symlink
+      file:
+        src: "{{ gradle_dest }}/gradle-{{ gradle_version }}/bin/gradle"
+        dest: /usr/bin/gradle
+        state: link
+
+    - name: Source JAVA_HOME in the current shell
+      shell: source /etc/profile.d/jdk.sh
+      args:
+        executable: /bin/bash
+
+    - name: Clone repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: cogsi-1190404-1191106-1190699
+        force: yes
+        #delete
+
+    - name: Configure application.properties for Spring Boot
+      copy:
+        dest: cogsi-1190404-1191106-1190699/CS02/tut-rest-gradle/app/src/main/application.properties
+        content: |
+          spring.datasource.url=jdbc:h2:tcp://localhost:1011/./test
+          spring.datasource.driverClassName=org.h2.Driver
+          spring.datasource.username=sa
+          spring.datasource.password=
+
+    - name: Wait for database to be ready
+      wait_for:
+        host: "192.168.138.143"
+        port: 9095
+        delay: 3
+        state: started
+        timeout: 300
+
+    - name: Build and start REST service if START_REST_SERVICE is true
+      shell: |
+        echo "Building REST service..."
+        gradle build
+        echo "Starting REST service..."
+        gradle bootRun &
+      args:
+        chdir: cogsi-1190404-1191106-1190699/CS02/tut-rest-gradle/app
+      when: "'START_REST_SERVICE' in ansible_env and ansible_env.START_REST_SERVICE == 'true'"

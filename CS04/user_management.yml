@@ -1,0 +1,33 @@
+- name: Create developers group and devuser on both hosts
+  hosts: all
+  become: true
+  tasks:
+    - name: Create 'developers' group
+      group:
+        name: developers
+        state: present
+
+    - name: Create 'devuser' user
+      user:
+        name: devuser
+        group: developers
+        create_home: yes
+        state: present
+
+    - name: Set up application directory on host1 (REST service)
+      file:
+        path: /opt/spring-app
+        state: directory
+        owner: devuser
+        group: developers
+        mode: '0750'
+      when: inventory_hostname == "host1"
+
+    - name: Set up database directory on host2 (H2 database)
+      file:
+        path: /opt/h2-database
+        state: directory
+        owner: devuser
+        group: developers
+        mode: '0750'
+      when: inventory_hostname == "host2"
