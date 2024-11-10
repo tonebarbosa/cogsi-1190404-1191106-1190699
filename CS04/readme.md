@@ -295,14 +295,44 @@ On **host2_playbook.yml**
 Examples used:
 - **Ensure specific states**
 
-For packages and services we used 
+For packages and services we used
 ````
  state: present
 ````
 - **Error Handling:** Although we did not use, we could implement the **failed_when** to prevent failing the playbook for specific error or **ignore_errors** to ignore them.
 
+### DNS Configuration
+
+In order to start the virtual machines, we've used the *vagrant up* command. Then, when the state of the machines was the desired, we've provisioned with our ansible scripts using *vagrant provision*
+To Mac with Apple chips, we've used VMWare and for Windows we've used VirtualBox
+
 ### Summary
-This setup ensures a structured and secure deployment process with Ansible, building on the initial improved Vagrant setup from CA3 Part 2. 
+This setup ensures a structured and secure deployment process with Ansible, building on the initial improved Vagrant setup from CA3 Part 2.
 By separating configurations into specific playbooks and tasks, we enforce modularity, which aids in troubleshooting and enables selective re-runs if any service or configuration needs adjustment.
 
 ## Alternatives
+
+Using Chef as an alternative for CA4 provides a robust approach to managing complex configurations, ensuring consistency, and applying reusable, scalable configurations across multiple VMs. Here’s a breakdown of how Chef could be applied to meet the goals of CA4, along with the reasoning behind each step.
+Chef operates on a client-server model (or can run locally as "Chef Solo") and uses cookbooks and recipes to define the desired state of the infrastructure. For this CA4 assignment, we would use Chef to handle the setup and configuration of the application (Spring Boot) and database (H2), security configurations, user management, and network access controls.
+
+Chef’s configurations are written in recipes using Ruby DSL (Domain Specific Language), and these recipes are organized into cookbooks. Each VM will apply the relevant recipes to achieve the setup defined in CA4.
+
+Cookbooks will include recipes to install required software, configure the application, set up the database, manage security, and control network access.
+
+Goal: Create cookbooks to handle specific tasks on each VM:
+Application VM (app): Deploy the Spring application, configure SSH, firewall rules, and user access.
+Database VM (db): Set up the H2 database, enable server mode, and restrict access to the application VM only.
+Justification: Breaking down configurations into individual recipes within cookbooks helps modularize each configuration task and makes them reusable.
+Cookbooks to Create:
+
+### App Cookbook:
+
+- Install Java: Required for both the Spring application and H2 database.
+- Deploy Spring Application: Copy the application JAR file and configure the application properties.
+- Application Properties Configuration: Customize the application.properties file to connect to the H2 database running on the db VM.
+
+### DB Cookbook:
+
+- Install Java: Required to run H2.
+- Deploy H2 Database: Download and start the H2 database in server mode.
+- Database Configuration: Configure H2 to allow network access and set up credentials.

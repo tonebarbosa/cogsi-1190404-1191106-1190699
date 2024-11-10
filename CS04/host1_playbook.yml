@@ -64,7 +64,7 @@
       git:
         repo: "{{ repo_url }}"
         dest: cogsi-1190404-1191106-1190699
-        version: feature/cogsi-22
+        force: yes
         #delete
 
     - name: Configure application.properties for Spring Boot
