@@ -290,7 +290,7 @@ On **host2_playbook.yml**
 ````
 ### Ensuring Idempotency
 - **Goal:** Ensure all tasks are idempotent, meaning they won’t cause unintended changes if re-run.
-- **Justification:** dempotency is crucial for Ansible playbooks in production environments, allowing safe re-runs without changing the desired state.
+- **Justification:** idempotency is crucial for Ansible playbooks in production environments, allowing safe re-runs without changing the desired state.
 
 Examples used:
 - **Ensure specific states**
