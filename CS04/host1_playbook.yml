@@ -25,12 +25,12 @@
         state: present
 
     - name: Set JAVA_HOME environment variable
-      copy:
-        dest: /etc/profile.d/jdk.sh
-        content: |
+      lineinfile:
+        path: /etc/profile.d/jdk.sh
+        line: |
           export JAVA_HOME={{ java_home }}
           export PATH=$JAVA_HOME/bin:$PATH
-        mode: '0644'
+        create: yes
 
     - name: Download Gradle
       get_url:
@@ -38,7 +38,7 @@
         dest: /tmp/gradle.zip
 
     - name: Ensure /opt/gradle directory exists
-      ansible.builtin.file:
+      file:
         path: "{{ gradle_dest }}"
         state: directory
         mode: '0755'
@@ -60,27 +60,16 @@
       args:
         executable: /bin/bash
 
-    - name: Display versions
-      shell: |
-        echo "Git version: $(git --version)"
-        echo "Java version: $(java -version)"
-        echo "Maven version: $(mvn -version)"
-        echo "Gradle version: $(gradle -v)"
-      register: version_output
-
-    - name: Print versions output
-      debug:
-        msg: "{{ version_output.stdout_lines }}"
-
-    - name: Clone repository if CLONE_REPO is true
+    - name: Clone repository
       git:
         repo: "{{ repo_url }}"
         dest: cogsi-1190404-1191106-1190699
-      #when: "'CLONE' in ansible_env and ansible_env.CLONE_REPO == 'true'"
+        version: feature/cogsi-22
+        #delete
 
     - name: Configure application.properties for Spring Boot
       copy:
-        dest: cogsi-1190404-1191106-1190699/CS02/tut-rest-gradle/app/src/main/resources/application.properties
+        dest: cogsi-1190404-1191106-1190699/CS02/tut-rest-gradle/app/src/main/application.properties
         content: |
           spring.datasource.url=jdbc:h2:tcp://localhost:1011/./test
           spring.datasource.driverClassName=org.h2.Driver
@@ -89,23 +78,11 @@
 
     - name: Wait for database to be ready
       wait_for:
-        host: "database.mydomain"
+        host: "192.168.138.143"
         port: 9095
         delay: 3
         state: started
         timeout: 300
-      delegate_to: localhost
-
-
-    - name: Build and start chat service if START_CHAT_SERVICE is true
-      shell: |
-        echo "Building chat service..."
-        gradle build
-        echo "Starting chat service..."
-        gradle runServer &
-      args:
-        chdir: cogsi-1190404-1191106-1190699/CS02/
-      when: "'START_CHAT_SERVICE' in ansible_env and ansible_env.START_CHAT_SERVICE == 'true'"
 
     - name: Build and start REST service if START_REST_SERVICE is true
       shell: |

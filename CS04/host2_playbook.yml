@@ -33,11 +33,12 @@
         state: enabled
 
     - name: Set JAVA_HOME system-wide
-      copy:
-        dest: /etc/profile.d/jdk.sh
-        content: |
+      lineinfile:
+        path: /etc/profile.d/jdk.sh
+        line: |
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
           export PATH=$JAVA_HOME/bin:$PATH
+        create: yes
         mode: '0644'
 
     - name: Download H2 Database
