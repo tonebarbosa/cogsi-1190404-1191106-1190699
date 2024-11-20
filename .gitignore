@@ -193,3 +193,4 @@ my_vagrant_key
 
 ### Gradle Patch ###
 # Java heap dump
+**/db/data/*.db

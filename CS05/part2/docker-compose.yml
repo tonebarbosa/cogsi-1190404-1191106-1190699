@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    build: ./db
+    container_name: db_service
+    image: afbarbosa/db_image:latest
+    environment:
+      - H2_DATABASE=data/sample
+      - H2_USER=admin
+      - H2_PASSWORD=pswrd
+    volumes:
+      - ./db/data:/var/lib/h2
+    networks:
+      - app-network
+
+  web:
+    build: ./web
+    container_name: web_service
+    image: afbarbosa/web_image:latest
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:tcp://db_service:9092/sample
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin123
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://db_service:8080 || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
