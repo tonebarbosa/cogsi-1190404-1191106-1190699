@@ -133,3 +133,71 @@ This demonstrates the use of Docker Compose to set up a multi-container environm
 
 ### Note
 We cloned the application from the gradle project beacause docker only can acess subfolders and not "upper" folders. And as it was on CS02/... directories and we were positioned on CS05, it would not work. Therefore, to facilitate this process and after analyzing the two versions made on part1, we've followed the cloning approach.
+
+## Alternative Technology
+
+### Podman
+Podman is a container management tool designed as a secure, daemonless alternative to Docker. It allows users to build, run, and manage containers without requiring elevated privileges, thanks to its rootless architecture. Podman adheres to the Open Container Initiative (OCI) standards, ensuring compatibility with Docker images and workflows, including Dockerfiles and registries like Docker Hub. Unlike Docker, Podman uses a decentralized approach, running containers as independent processes without relying on a central daemon, which enhances security and resource efficiency. Additionally, Podman supports pods, a concept inspired by Kubernetes, making it an excellent choice for developers working with containerized microservices.
+
+###Advantages of Podman
+####Part 1: Building Application Images
+- Security: Rootless Operation
+
+Podman does not require a root daemon, which means users can build and run containers without superuser privileges.
+This reduces the risk of privilege escalation and makes Podman safer to use on multi-user systems.
+
+- Daemonless Architecture
+Podman operates without a central background daemon, avoiding the single point of failure that Docker has. Each container or build runs as an independent process.
+
+- Compatibility with Dockerfiles
+Podman uses the same image format and supports Dockerfiles, making migration straightforward without requiring script or process rewrites.
+
+- Smaller Attack Surface
+By not running as a root-level daemon, Podman minimizes its attack surface, enhancing security for production systems.
+- Performance
+Since Podman is daemonless, it can be more lightweight in environments with constrained resources, leading to better performance during builds.
+
+####Part 2: Multi-Container Setup
+- Pod Concept for Multi-Container Environments
+Podman introduces pods, which group containers in a shared namespace (network, IPC). This simplifies setups where services like web and db must communicate.
+Pods align with Kubernetes constructs, enabling easier portability to Kubernetes environments.
+
+- Built-in Kubernetes Support
+Podman can generate Kubernetes YAML directly (podman generate kube), streamlining deployment to orchestration platforms compared to Docker Compose.
+
+- Flexibility in Networking
+Containers within a pod share networking by default, removing the need for explicit linking or host resolution steps used in Docker Compose.
+
+- Persistent Storage
+Podman provides robust volume support similar to Docker, and its rootless nature allows users to manage volumes without requiring elevated privileges.
+
+- Registry Interoperability
+Podman supports pushing and pulling images from the same registries as Docker (e.g., Docker Hub, Quay.io), making it straightforward to use Podman-built images in Docker or vice versa.
+
+###Disadvantages of Podman
+####Part 1: Building Application Images
+
+- Less Mature Ecosystem
+Docker has a more mature ecosystem with extensive community support, documentation, and tooling. Podman, while growing, still lacks the same level of widespread adoption.
+
+- Compatibility Gaps
+While Podman supports Dockerfiles, edge cases may arise with more complex Dockerfiles or legacy images that rely on Docker-specific features.
+
+- Learning Curve
+Users familiar with Docker may find Podman’s commands slightly different (e.g., podman run vs. docker run), requiring some adaptation.
+
+####Part 2: Multi-Container Setup
+
+- No Native Docker Compose Alternative
+Podman lacks a native equivalent to Docker Compose, requiring either:
+Manual scripting of pods and containers.
+Use of a third-party tool like Podman Compose, which is not as robust or feature-complete as Docker Compose.
+
+- Limited Health Check Support
+Podman does not have built-in health checks like Docker’s HEALTHCHECK. Users must rely on external tools or scripts to monitor container health.
+
+- Smaller Community for Complex Use Cases
+While Docker Compose is widely used and supported, Podman’s ecosystem for multi-container setups is still developing, which might present challenges for advanced configurations.
+
+- Cross-Platform Availability
+Docker is well-supported on Windows, macOS, and Linux. Podman, while available on these platforms, is most robust on Linux. Support on macOS and Windows is still improving but can involve additional setup.
