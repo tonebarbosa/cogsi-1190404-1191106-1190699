@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'cogsi-32', url: 'https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git'
+            }
+        }
+
+
+        stage('Assemble') {
+            steps {
+                dir ('CS02/tut-rest-gradle') {
+                 sh './gradlew build'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir ('CS02/tut-rest-gradle') {
+                    sh './gradlew integrationTest'
+                }
+            }
+            post {
+                always {
+                    dir ('CS02/tut-rest-gradle/app') {
+                      junit '**/build/test-results/integrationTest/binary/output.bin'
+                    }
+                }
+            }
+        }
+
+        stage('Archive') {
+            steps {
+                dir ('CS02/tut-rest-gradle') {
+                    archiveArtifacts artifacts: '**/build/libs/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Deploy to Production?') {
+            steps {
+                input 'Deploy to production?'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                dir ('CS06/part1') {
+                    ansiblePlaybook(
+                        playbook: '${WORKSPACE}/CS06/part1/deploy_green.yml',
+                        inventory: '${WORKSPACE}/CS06/part1/hosts.ini',
+                        colorized: true,
+                        extraVars: [
+                            jenkins_workspace: "${WORKSPACE}/CS02/tut-rest-gradle/app/build/libs"
+                        ]
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed."
+        }
+    }
+}

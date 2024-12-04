@@ -1,0 +1,30 @@
+- name: Deploy new JAR to Green VM
+  hosts: green
+  tasks:
+    - name: Stop the Java service
+      ansible.builtin.systemd:
+        name: java-app
+        state: stopped
+
+    - name: Copy the new JAR artifact to the VM
+      ansible.builtin.copy:
+        src: "{{ jenkins_workspace }}/build/libs/artifact.jar"
+        dest: /opt/java-app/app.jar
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Restart the java-app service
+      ansible.builtin.systemd:
+        name: java-app
+        state: restarted
+        enabled: true
+
+    - name: Sleep 10s
+      ansible.builtin.wait_for:
+        timeout: 10
+
+    - name: Check if 'java-app' service is running
+      ansible.builtin.command: systemctl is-active java-app
+      register: java_service_status
+      failed_when: false
