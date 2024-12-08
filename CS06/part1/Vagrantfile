@@ -1,8 +1,13 @@
 Vagrant.configure("2") do |config|
+
+  config.vm.provision "file", source: "my_vagrant_key.pub", destination: "~/.ssh/authorized_keys"
+  config.ssh.private_key_path = ["my_vagrant_key", "~/.vagrant.d/insecure_private_key"]
+  config.ssh.insert_key = false
+
   config.vm.define "blue" do |blue|
 
     blue.vm.box = "bento/ubuntu-20.04"
-    blue.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+    blue.vm.network "private_network", ip: "192.168.33.10"
     blue.vm.provision "ansible" do |ansible|
       ansible.playbook = "blue_playbook.yml"
     end
@@ -10,7 +15,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "green" do |green|
     green.vm.box = "bento/ubuntu-20.04"
-    green.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+    green.vm.network "private_network", ip: "192.168.33.11"
     green.vm.provision "ansible" do |ansible|
       ansible.playbook = "green_playbook.yml"
     end

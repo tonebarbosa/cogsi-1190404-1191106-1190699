@@ -8,7 +8,7 @@
 
     - name: Copy the new JAR artifact to the VM
       ansible.builtin.copy:
-        src: "{{ jenkins_workspace }}/build/libs/artifact.jar"
+        src: "{{ jenkins_workspace }}"
         dest: /opt/java-app/app.jar
         owner: vagrant
         group: vagrant

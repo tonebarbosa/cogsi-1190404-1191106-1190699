@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'cogsi-32', url: 'https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git'
+                git branch: 'main', url: 'https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git'
             }
         }
 
@@ -65,6 +65,15 @@ pipeline {
     post {
         success {
             echo "Pipeline completed successfully!"
+            script {
+                def tagName = "stable-v${env.BUILD_NUMBER}"
+
+                sh """
+                git tag -a ${tagName} -m "Stable build ${tagName}"
+                git push origin ${tagName}
+                """
+                echo "Tagged build as ${tagName}"
+            }
         }
         failure {
             echo "Pipeline failed."
