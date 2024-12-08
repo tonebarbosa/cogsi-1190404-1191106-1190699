@@ -13,6 +13,8 @@ We've created two machines, provisioned using ansible, where we've installed Jav
 
 ![img1](./images/img1.png)
 
+To start these machines, as usual, we've used the command `vagrant up`.
+
 The configuration was the same for both machines, the only difference was the port used by the app, 8080 for the blue machine and 8081 for the green machine.
 The virtual machines were attributed with two static ips, so that when the ansible hosts need to be updated, the ip addresses don't change.
 

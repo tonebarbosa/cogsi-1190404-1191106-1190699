@@ -1,0 +1,66 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          repository: 'https://github.com/tonebarbosa/cogsi-1190404-1191106-1190699.git'
+          ref: 'main'
+
+      - name: Assemble
+        run: |
+          cd CS02/tut-rest-gradle
+          ./gradlew build
+
+      - name: Test
+        run: |
+          cd CS02/tut-rest-gradle
+          ./gradlew integrationTest
+        env:
+          JUNIT_REPORTS: '**/build/test-results/integrationTest/binary/output.bin'
+
+      - name: Archive Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: junit
+          path: CS02/tut-rest-gradle/app/**/build/test-results/integrationTest/binary/output.bin
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: CS02/tut-rest-gradle/build/libs/*.jar
+
+      - name: Ask for Deployment
+        input:
+          message: 'Deploy to production?'
+
+      - name: Deploy
+        run: |
+          cd CS06/part1
+          ansible-playbook deploy_green.yml -i hosts.ini --extra-vars "jenkins_workspace=${{ env.WORKSPACE }}/CS02/tut-rest-gradle/app/build/libs"
+        env:
+          WORKSPACE: ${{ github.workspace }}
+
+      - name: Rollback on Failure
+        if: ${{ failure() }}
+        run: |
+          cd CS06/part1
+          ansible-playbook rollback_green.yml -i hosts.ini --extra-vars "artifact_src=${{ env.WORKSPACE }}/CS02/tut-rest-gradle/app/build/libs artifact_dest=${{ env.WORKSPACE }}/CS02/tut-rest-gradle/app/build/libs"
+        env:
+          WORKSPACE: ${{ github.workspace }}
+
+      - name: Git Tag
+        run: |
+          TAG_NAME="stable-v${{ github.run_number }}"
+          git tag -a ${{ env.TAG_NAME }} -m "Stable build ${{ env.TAG_NAME }}"
+          git push origin ${{ env.TAG_NAME }}
