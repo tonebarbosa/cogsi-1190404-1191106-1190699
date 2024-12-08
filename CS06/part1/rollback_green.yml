@@ -1,0 +1,31 @@
+- name: Rollback to previous stable version
+  hosts: green
+
+  tasks:
+    - name: Stop the Java service
+      ansible.builtin.systemd:
+        name: java-app
+        state: stopped
+
+    - name: Replace the current application with the retrieved artifact
+      copy:
+        src: "{{ artifact_src }}"
+        dest: "{{ artifact_dest }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Restart the application
+      systemd:
+        name: "java-app"
+        state: restarted
+        enabled: yes
+
+    - name: Sleep 10s
+      ansible.builtin.wait_for:
+        timeout: 10
+
+    - name: Check if 'java-app' service is running
+      ansible.builtin.command: systemctl is-active java-app
+      register: java_service_status
+      failed_when: false

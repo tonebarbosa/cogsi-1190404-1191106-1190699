@@ -59,6 +59,24 @@ pipeline {
                     )
                 }
             }
+            post {
+                success {
+                    echo 'Deployment completed successfully!'
+                }
+                failure {
+                    echo 'Deployment failed! Triggering rollback...'
+                    script {
+                        ansiblePlaybook(
+                            playbook: '${WORKSPACE}/CS06/part1/rollback_green.yml',
+                            inventory: '${WORKSPACE}/CS06/part1/hosts.ini',
+                            colorized: true,
+                            extraVars: [
+                                artifact_src: "${WORKSPACE}/CS02/tut-rest-gradle/app/build/libs"
+                                artifact_dest: "${WORKSPACE}/CS02/tut-rest-gradle/app/build/libs"
+                            ]
+                        )
+                    }
+                }
         }
     }
 
@@ -77,6 +95,7 @@ pipeline {
         }
         failure {
             echo "Pipeline failed."
+
         }
     }
 }
