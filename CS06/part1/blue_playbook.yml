@@ -1,0 +1,138 @@
+- name: Provision Blue VM
+  hosts: blue
+  become: yes
+  tasks:
+    - name: Update APT package index
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Java
+      ansible.builtin.apt:
+        name: openjdk-17-jdk
+        state: present
+
+    - name: Install Gradle
+      ansible.builtin.apt:
+        name: gradle
+        state: present
+
+    - name: Download H2 database
+      ansible.builtin.get_url:
+        url: https://github.com/h2database/h2database/releases/download/version-2.3.230/h2-2024-07-15.zip
+        dest: /tmp/h2-2024-07-15.zip
+
+    - name: Unzip H2 database
+      ansible.builtin.unarchive:
+        src: /tmp/h2-2024-07-15.zip
+        dest: /home/vagrant/
+        remote_src: yes
+
+    - name: Create H2 data directory
+      ansible.builtin.file:
+        path: /home/vagrant/h2data
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Create H2 server startup script
+      ansible.builtin.copy:
+        dest: /home/vagrant/start_h2.sh
+        content: |
+          #!/bin/bash
+          java -cp /home/vagrant/h2/bin/h2*.jar org.h2.tools.Server -tcp -tcpAllowOthers -baseDir /home/vagrant/h2data
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Create H2 systemd service file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/h2.service
+        content: |
+          [Unit]
+          Description=H2 Database Service
+          After=network.target
+
+          [Service]
+          ExecStart=/home/vagrant/start_h2.sh
+          User=vagrant
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start H2 service
+      ansible.builtin.systemd:
+        name: h2
+        enabled: yes
+        state: started
+
+    - name: Check H2 service status
+      ansible.builtin.systemd:
+        name: h2
+        state: started
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: /opt/java-app
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Copy initial application JAR
+      ansible.builtin.copy:
+        src: ./setup/app-0.0.1-SNAPSHOT.jar
+        dest: /opt/java-app/app.jar
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Create systemd service for Java app
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/java-app.service
+        content: |
+          [Unit]
+          Description=Java App
+          After=network.target
+
+          [Service]
+          Environment="SPRING_DATASOURCE_URL=jdbc:h2:tcp://localhost/~/test"
+          Environment="SPRING_DATASOURCE_USERNAME=sa"
+          Environment="SPRING_DATASOURCE_PASSWORD=password"
+          ExecStart=/usr/bin/java -jar /opt/java-app/app.jar
+          Restart=always
+          User=vagrant
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable and start the Java service
+      ansible.builtin.systemd:
+        name: java-app
+        enabled: yes
+        state: started
+
+    - name: Verify Java service is active
+      ansible.builtin.systemd:
+        name: java-app
+        state: started
+
+    - name: Sleep 10s
+      ansible.builtin.wait_for:
+        timeout: 10
+
+    - name: Check if 'java-app' service is running
+      ansible.builtin.command: systemctl is-active java-app
+      register: java_service_status
+      failed_when: false
