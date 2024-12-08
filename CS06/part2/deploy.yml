@@ -1,0 +1,23 @@
+- name: Deploy Combined Docker Container
+  hosts: blue
+  become: true
+  vars:
+    docker_image: ""
+
+  tasks:
+    - name: Install Docker if not present
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Stop and remove any existing container
+      shell: |
+        docker stop combined_service || true
+        docker rm combined_service || true
+      ignore_errors: yes
+
+    - name: Run the new Docker container
+      shell: |
+        docker run -d --name java-app \
+        -p 8080:8080 -p 9092:9092 \
+        {{ docker_image }}
